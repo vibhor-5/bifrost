@@ -1,0 +1,30 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "config_store": { "enabled": true, "type": "sqlite", "config": { "path": "./config.db" } },
+  "client": { "enforce_auth_on_inference": false },
+  "logs_store": { "enabled": false },
+  "mcp": {
+    "tool_sync_interval": "1m",
+    "client_configs": [
+      {
+        "name": "demo",
+        "connection_type": "http",
+        "connection_string": "http://localhost:9100/mcp",
+        "tools_to_execute": ["*"]
+      }
+    ]
+  },
+  "plugins": [
+    {
+      "enabled": true,
+      "name": "mcp-integrity",
+      "config": {
+        "mode": "enforce",
+        "state_file": "./mcp-integrity-pins.json",
+        "findings_log": "./mcp-integrity-findings.jsonl",
+        "scan_arguments": true,
+        "scan_results": true
+      }
+    }
+  ]
+}
