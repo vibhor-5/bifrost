@@ -11,6 +11,7 @@ import (
 	"github.com/maximhq/bifrost/plugins/governance"
 	"github.com/maximhq/bifrost/plugins/logging"
 	"github.com/maximhq/bifrost/plugins/maxim"
+	"github.com/maximhq/bifrost/plugins/mcpintegrity"
 	"github.com/maximhq/bifrost/plugins/modelcatalogresolver"
 	"github.com/maximhq/bifrost/plugins/otel"
 	"github.com/maximhq/bifrost/plugins/prompts"
@@ -178,6 +179,16 @@ func loadBuiltinPlugin(ctx context.Context, name string, pluginConfig any, bifro
 			return nil, fmt.Errorf("failed to marshal maxim plugin config: %w", err)
 		}
 		return maxim.Init(maximConfig, logger)
+
+	case mcpintegrity.PluginName:
+		integrityConfig, err := MarshalPluginConfig[mcpintegrity.Config](pluginConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal mcp-integrity plugin config: %w", err)
+		}
+		if integrityConfig == nil {
+			integrityConfig = &mcpintegrity.Config{}
+		}
+		return mcpintegrity.Init(*integrityConfig, logger)
 
 	case semanticcache.PluginName:
 		semanticConfig, err := MarshalPluginConfig[semanticcache.Config](pluginConfig)
@@ -357,7 +368,17 @@ func (s *BifrostHTTPServer) loadBuiltinPlugins(ctx context.Context) error {
 	}
 	s.Config.SetPluginOrderInfo(maxim.PluginName, builtinPlacement, schemas.Ptr(9))
 
-	// 10. ModelCatalogResolver (last routing layer — fills req.Provider from catalog only when
+	// 10. MCP Integrity (if configured in PluginConfigs). Runs after governance so callers
+	// are already authorised, and its post-hooks run before logging sees tool results.
+	integrityConfig := s.getPluginConfig(mcpintegrity.PluginName)
+	if integrityConfig != nil && integrityConfig.Enabled {
+		s.registerPluginWithStatus(ctx, mcpintegrity.PluginName, nil, integrityConfig.Config, false)
+	} else {
+		s.markPluginDisabled(mcpintegrity.PluginName)
+	}
+	s.Config.SetPluginOrderInfo(mcpintegrity.PluginName, builtinPlacement, schemas.Ptr(10))
+
+	// 11. ModelCatalogResolver (last routing layer — fills req.Provider from catalog only when
 	// no earlier routing plugin (governance routing rules, governance VK LB, enterprise LB)
 	// already set one. CEL rules can still match on provider == "" because this runs last.
 	// Requires a model catalog; only register when one is configured.

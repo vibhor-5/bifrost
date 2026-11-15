@@ -1,5 +1,6 @@
 ## ✨ Features
 
+- **MCP Integrity Plugin** - New built-in `mcp-integrity` plugin that pins MCP tool definitions and detects rug pulls, tool poisoning, injected tool results, leaked secrets and toxic tool sequences. Monitor mode records findings; enforce mode quarantines tools and refuses risky calls
 - **Kimchi Provider** - New `kimchi` provider for chat, Responses, embeddings and list models
 
 ## 🐞 Fixed

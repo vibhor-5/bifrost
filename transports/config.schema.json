@@ -4307,7 +4307,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Name of the plugin (built-in: telemetry, prompts, logging, governance, maxim, semantic_cache, otel, or custom plugin name)"
+            "description": "Name of the plugin (built-in: telemetry, prompts, logging, governance, maxim, semantic_cache, otel, mcp-integrity, or custom plugin name)"
           },
           "config": {
             "type": "object",
@@ -4573,6 +4573,142 @@
                   "required": [
                     "api_key"
                   ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "mcp-integrity"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "config": {
+                  "type": "object",
+                  "description": "Configuration for the MCP integrity plugin. Pins MCP tool definitions, detects rug pulls and tool poisoning, and can scan call arguments and results.",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": ["monitor", "enforce"],
+                      "default": "monitor",
+                      "description": "monitor records findings only; enforce quarantines tools and refuses risky calls"
+                    },
+                    "state_file": {
+                      "type": "string",
+                      "description": "Path where tool pins are persisted. Without it, pins are in memory and reset on restart."
+                    },
+                    "block_severity": {
+                      "type": "string",
+                      "enum": ["low", "medium", "high", "critical"],
+                      "default": "high",
+                      "description": "Lowest scanner severity that blocks in enforce mode"
+                    },
+                    "on_new_tool": {
+                      "type": "string",
+                      "enum": ["allow", "quarantine"],
+                      "default": "allow",
+                      "description": "What to do with a tool that appears after a server's tools were pinned"
+                    },
+                    "servers": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Limit the plugin to the named MCP clients. Empty means all."
+                    },
+                    "disable_scanner": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Keep pinning but skip tool text scanning"
+                    },
+                    "max_description_length": {
+                      "type": "integer",
+                      "default": 2000,
+                      "description": "Flag tool descriptions longer than this many bytes. Negative disables the check."
+                    },
+                    "max_findings": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "default": 1000,
+                      "description": "Size of the in-memory findings buffer"
+                    },
+                    "findings_log": {
+                      "type": "string",
+                      "description": "Append every finding as one JSON line to this file"
+                    },
+                    "scan_arguments": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Scan tool-call arguments for secrets and sensitive file paths"
+                    },
+                    "scan_results": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Scan tool results for injected instructions and secrets"
+                    },
+                    "max_calls_per_minute": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "default": 0,
+                      "description": "Per-tool call-rate limit. 0 disables."
+                    },
+                    "arg_size_anomaly_factor": {
+                      "type": "number",
+                      "minimum": 0,
+                      "default": 0,
+                      "description": "Flag a call whose arguments are this many times larger than the tool's average. 0 disables."
+                    },
+                    "tool_labels": {
+                      "type": "object",
+                      "description": "Capability labels (private_data, untrusted_content, exfil, or your own) by exact tool name or prefix*",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      }
+                    },
+                    "infer_labels": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Derive labels from MCP tool annotations for unlabelled tools"
+                    },
+                    "toxic_flows": {
+                      "type": "array",
+                      "description": "Label sequences refused within one session. Defaults to private_data to exfil and untrusted_content to exfil.",
+                      "items": {
+                        "type": "object",
+                        "required": ["name", "from", "to"],
+                        "properties": {
+                          "name": { "type": "string" },
+                          "from": { "type": "string" },
+                          "to": { "type": "string" }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "session_ttl_seconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "default": 1800,
+                      "description": "How long a session's label history is kept"
+                    },
+                    "manifests": {
+                      "type": "array",
+                      "description": "Ed25519-signed tool manifests that replace trust on first use",
+                      "items": {
+                        "type": "object",
+                        "required": ["server", "path", "public_key"],
+                        "properties": {
+                          "server": { "type": "string" },
+                          "path": { "type": "string" },
+                          "public_key": { "type": "string", "description": "Base64 Ed25519 public key" }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
                   "additionalProperties": false
                 }
               }

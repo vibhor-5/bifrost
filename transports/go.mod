@@ -22,6 +22,7 @@ require (
 	github.com/maximhq/bifrost/plugins/governance v1.12.1
 	github.com/maximhq/bifrost/plugins/logging v1.12.1
 	github.com/maximhq/bifrost/plugins/maxim v1.7.16
+	github.com/maximhq/bifrost/plugins/mcpintegrity v0.1.0
 	github.com/maximhq/bifrost/plugins/modelcatalogresolver v1.1.16
 	github.com/maximhq/bifrost/plugins/otel v1.6.6
 	github.com/maximhq/bifrost/plugins/prompts v1.1.16
